@@ -1,6 +1,6 @@
 ---
 name: html-style
-description: House design and writing style for any standalone HTML page or Claude Artifact — plain-English copy (GOV.UK + Simplified Technical English) plus a Geist/Vercel-inspired (Inter + JetBrains Mono, ink/canvas palette, stacked-shadow surfaces, pill buttons, mono eyebrows, one mesh gradient; Sitemate blue for Sitemate work, purple otherwise) look with a light/dark switch. Use whenever building, generating, or styling an HTML page, report, checklist, dashboard, or Artifact, unless a different look is asked for.
+description: House design and writing style for any standalone HTML page or Claude Artifact — plain-English copy (GOV.UK + Simplified Technical English) plus a Geist/Vercel-inspired (Inter + JetBrains Mono, ink/canvas palette, stacked-shadow surfaces, pill buttons, mono eyebrows, one mesh gradient; Sitemate blue for Sitemate work, purple otherwise) look with shadcn-style components, restrained motion and a light/dark switch. Use whenever building, generating, or styling an HTML page, report, checklist, dashboard, or Artifact, unless a different look is asked for.
 ---
 
 # HTML design and writing style
@@ -67,13 +67,36 @@ Contrast: `--sitemate` is 3.8:1 on white, so use it for UI, borders, large text,
 4. **Do not override the negative letter-spacing** on `.display-*`.
 5. **One primary action per view.** Primary = ink pill. Secondary = white pill with `ds-1`.
 6. **Generous vertical rhythm.** Section padding `--4xl`/`--5xl`, card padding `--lg`/`--xl`.
-7. **Keep the focus-visible ring and the reduced-motion block** (both in the CSS).
+7. **Keep the focus-visible ring and the reduced-motion block** (both in the CSS). Drop the reduced-motion block only on a motion prototype, where the animation is the point.
 8. **Restraint.** No gradients except the one mesh. No shadows outside `--ds-*`. Colour is functional (links, status, brand), not decoration.
 9. **Every colour goes through a token**, so the theme switch covers the whole page.
+10. **Use shadcn components.** Follow shadcn's anatomy, sizes and states. Do not invent custom nav, pill rows or control styles.
+11. **Motion is short and purposeful.** Follow the Motion section below.
+
+## Components (shadcn)
+
+Use shadcn's anatomy, sizes and states for every UI piece: Tabs, Button, Card, Badge, Input, Select, Dialog, Table, Progress. Artifacts cannot run React, so copy the markup and write the CSS by hand, restyled with the tokens above. Do not invent custom nav bars, pill rows or control styles.
+
+- **Tabs**: a `.tabs-list` (muted track, 4px padding, ring) holding `.tab` buttons. The selected tab is white with `--ds-2`. Use `role="tablist"`, `role="tab"`, `aria-selected`, and arrow-key movement.
+- **Button**: `.btn.primary` (solid ink pill), `.btn.secondary` (white pill, ring), `.btn.ghost` (no fill, fills on hover).
+- **Badge**: `.badge`, with `.outline` for a ring-only badge.
+- **Card**: `.card` for the one element that needs to stand off the page. Do not card everything.
+
+## Motion
+
+Animate only what helps the user follow a change. UI motion stays under 300ms.
+
+- **Curves**: `--ease-out: cubic-bezier(0.23, 1, 0.32, 1)` for things that enter. `--ease-move: cubic-bezier(0.77, 0, 0.175, 1)` for things that move across the screen. Do not use plain `ease` or `linear` for UI.
+- **Press**: `:active` scales to `0.97` on buttons, tabs and icon buttons.
+- **Enter**: fade and rise `8px` (`.enter`). Never animate from `scale(0)`. Start from `0.95` or higher, with opacity.
+- **Transitions over keyframes** for UI that can be interrupted, such as hover, press and toggle. Use keyframes only for one-shot entrances.
+- **Hover** effects sit behind `@media (hover: hover) and (pointer: fine)`, so touch screens do not stick in a hover state.
+- **Stagger** lists and chat messages by 40 to 80ms per item, or by about a second per message in a demo that someone narrates.
+- **Animate only** `transform` and `opacity` where you can.
 
 ## Theme switch (required)
 
-Every page ships a light/dark switch. **Light is the default.** Do not apply the viewer's OS dark preference automatically, so do **not** add a `@media (prefers-color-scheme: dark)` block. The choice persists per viewer in `localStorage` under `theme`, wrapped in try/catch. The button label reads "Dark mode" when light is active and "Light mode" when dark is active. On non-Sitemate pages, change the switch's active colour from `var(--sitemate)` to `var(--violet)`.
+Every page ships a light/dark switch. **Light is the default.** Do not apply the viewer's OS dark preference automatically, so do **not** add a `@media (prefers-color-scheme: dark)` block. The choice persists per viewer in `localStorage` under `theme`, wrapped in try/catch. The switch is a 36px round icon button (moon when light is active, sun when dark is active). Its `aria-label` and `title` read "Switch to dark mode" or "Switch to light mode". 
 
 ## Writing style (all page copy)
 
@@ -226,6 +249,10 @@ The words on the page follow plain English: GOV.UK style plus Simplified Technic
 
   --ring: rgba(0,0,0,0.08);
 
+  /* — Motion — */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);   /* enters */
+  --ease-move: cubic-bezier(0.77, 0, 0.175, 1); /* on-screen moves */
+
   --max-page: 1400px;
   --max-prose: 880px;
 }
@@ -305,20 +332,41 @@ a:hover { text-decoration: underline; }
 .badge.warn { background: var(--warning-soft); color: var(--warning-deep); }
 .badge.error { background: var(--error-soft); color: var(--error-deep); }
 .badge.sitemate { background: var(--sitemate-soft); color: var(--sitemate-deep); }
+.badge.outline { background: transparent; box-shadow: var(--ds-1); }
 .badge.mono { font-family: "JetBrains Mono", ui-monospace, monospace; text-transform: uppercase; letter-spacing: 0.04em; }
 
 /* — Buttons — */
 .btn {
   display: inline-flex; align-items: center; justify-content: center;
   font-weight: 500; white-space: nowrap; user-select: none; cursor: pointer;
-  border: none; transition: box-shadow .15s ease, background .15s ease;
+  border: none; transition: box-shadow .16s var(--ease-out), background .16s var(--ease-out), transform .16s var(--ease-out), opacity .16s var(--ease-out);
   font-size: var(--fs-body-md); height: 48px; padding: 0 28px; border-radius: var(--r-pill);
 }
+.btn:active { transform: scale(0.97); }
 .btn.primary { background: var(--ink); color: var(--canvas); }
-.btn.primary:hover { opacity: 0.88; }
 .btn.secondary { background: var(--canvas); color: var(--ink); box-shadow: var(--ds-1); }
-.btn.secondary:hover { box-shadow: var(--ds-2); }
+.btn.ghost { background: transparent; color: var(--body); height: 32px; padding: 0 12px; border-radius: var(--r-sm); font-size: var(--fs-body-sm); }
+@media (hover: hover) and (pointer: fine) {
+  .btn.primary:hover { opacity: 0.88; }
+  .btn.secondary:hover { box-shadow: var(--ds-2); }
+  .btn.ghost:hover { background: var(--canvas-soft-2); color: var(--ink); }
+}
 .btn.sm { height: 32px; padding: 0 12px; border-radius: var(--r-sm); font-size: var(--fs-body-sm); }
+
+/* — Tabs (shadcn) — */
+.tabs-list { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 4px; border-radius: 10px; background: var(--canvas-soft-2); box-shadow: var(--ds-1); max-width: 100%; }
+.tab {
+  height: 32px; padding: 0 14px; border: none; border-radius: 7px; background: transparent;
+  color: var(--body); font: inherit; font-size: var(--fs-body-sm); font-weight: 500; cursor: pointer; white-space: nowrap;
+  transition: background .16s var(--ease-out), color .16s var(--ease-out), box-shadow .16s var(--ease-out), transform .16s var(--ease-out);
+}
+.tab:active { transform: scale(0.97); }
+.tab[aria-selected="true"] { background: var(--canvas); color: var(--ink); box-shadow: var(--ds-2); }
+@media (hover: hover) and (pointer: fine) { .tab:hover:not([aria-selected="true"]) { color: var(--ink); } }
+
+/* — Enter animation (fade and rise) — */
+@keyframes enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.enter { animation: enter .28s var(--ease-out) both; }
 
 /* — Layout — */
 .page { max-width: var(--max-page); margin: 0 auto; padding: var(--lg); }
@@ -368,12 +416,13 @@ a:hover { text-decoration: underline; }
   --ring: rgba(255,255,255,0.10);
   color-scheme: dark;
 }
-.theme-toggle { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border-radius: var(--r-pill); border: none; background: var(--canvas); color: var(--ink); box-shadow: var(--ds-1); font-family: "Inter", ui-sans-serif, system-ui, sans-serif; font-size: var(--fs-body-sm); font-weight: 500; line-height: 1; cursor: pointer; transition: box-shadow .15s ease; }
-.theme-toggle:hover { box-shadow: var(--ds-2); }
-.theme-toggle .sw { position: relative; width: 26px; height: 14px; border-radius: var(--r-pill); background: var(--hairline-strong); flex: none; }
-.theme-toggle .sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; border-radius: 50%; background: var(--canvas); transition: transform .15s ease; }
-.theme-toggle[aria-pressed="true"] .sw { background: var(--sitemate); } /* use var(--violet) on non-Sitemate pages */
-.theme-toggle[aria-pressed="true"] .sw::after { transform: translateX(12px); }
+.theme-toggle { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border-radius: 50%; border: none; background: var(--canvas); color: var(--ink); box-shadow: var(--ds-1); cursor: pointer; transition: box-shadow .15s var(--ease-out), transform .15s var(--ease-out); }
+.theme-toggle:active { transform: scale(0.97); }
+@media (hover: hover) and (pointer: fine) { .theme-toggle:hover { box-shadow: var(--ds-2); } }
+.theme-toggle svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+.theme-toggle .i-sun { display: none; }
+:root[data-theme="dark"] .theme-toggle .i-sun { display: block; }
+:root[data-theme="dark"] .theme-toggle .i-moon { display: none; }
 ```
 
 ## Early script
@@ -389,7 +438,7 @@ Place right after `</style>` so the page never flashes the wrong theme.
 ## Toggle button
 
 ```html
-<button type="button" class="theme-toggle" id="theme-toggle" aria-pressed="false" aria-label="Switch between light and dark mode"><span class="sw" aria-hidden="true"></span><span class="lbl">Dark mode</span></button>
+<button type="button" class="theme-toggle" id="theme-toggle" aria-pressed="false" aria-label="Switch to dark mode" title="Switch to dark mode"><svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
 ```
 
 ## Toggle script
@@ -400,12 +449,12 @@ Place right after `</style>` so the page never flashes the wrong theme.
   var root = document.documentElement;
   var btn = document.getElementById('theme-toggle');
   if (!btn) return;
-  var lbl = btn.querySelector('.lbl');
   function current(){ return root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'; }
   function paint(){
-    var dark = current() === 'dark';
-    lbl.textContent = dark ? 'Light mode' : 'Dark mode';
+    var dark = current() === 'dark', t = dark ? 'Switch to light mode' : 'Switch to dark mode';
     btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+    btn.setAttribute('aria-label', t);
+    btn.setAttribute('title', t);
   }
   btn.addEventListener('click', function(){
     var next = current() === 'dark' ? 'light' : 'dark';
